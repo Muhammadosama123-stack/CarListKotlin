@@ -1,61 +1,95 @@
 package com.example.carslistkotlin
 
 
-import android.app.Activity
-import android.content.Intent
+import android.Manifest
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.View
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main2.*
-import java.lang.Exception
-import java.util.jar.Manifest
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
 
 class MainActivity2 : AppCompatActivity() {
+
+    private val PERMISSIONS_REQUEST = 1
+
+    private val PERMISSION_CAMERA = Manifest.permission.CAMERA
+    private val STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
+    private val WRITE = Manifest.permission.WRITE_EXTERNAL_STORAGE
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
+
+        val image = findViewById<ImageView>(R.id.imageView)
+        val saveBtn =  findViewById<Button>(R.id.button)
+        saveBtn.setOnClickListener{
+
+        }
+        image.setOnClickListener{
+            if(hasPermission())
+            {
+            //TODO the fuck u want
+            }
+            else
+            {
+                requestPermission()
+            }
+        }
     }
-    fun select(view: View){
-        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)){
-            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),2)
+
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray)
+    {
+        super.onRequestPermissionsResult(requestCode, permissions!!, grantResults)
+        if (requestCode == PERMISSIONS_REQUEST) {
+            if (allPermissionsGranted(grantResults)) {
+             //   setFragment()
+            } else {
+                requestPermission()
+            }
+        }
+    }
+
+    private fun allPermissionsGranted(grantResults: IntArray): Boolean {
+        for (result in grantResults) {
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private fun hasPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkSelfPermission(PERMISSION_CAMERA) == PackageManager.PERMISSION_GRANTED
+                    && checkSelfPermission(WRITE) == PackageManager.PERMISSION_GRANTED
+                    && checkSelfPermission(STORAGE) == PackageManager.PERMISSION_GRANTED
         } else {
-            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            startActivityForResult(intent,1)
+            true
         }
-
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == 2){
-            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                startActivityForResult(intent,1)
+    private fun requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (shouldShowRequestPermissionRationale(PERMISSION_CAMERA)
+                && shouldShowRequestPermissionRationale(STORAGE)
+                && shouldShowRequestPermissionRationale(WRITE)
+            ) {
+                Toast.makeText(
+                    this,
+                    "Camera permission is required for this demo",
+                    Toast.LENGTH_LONG
+                )
+                    .show()
             }
+            requestPermissions(arrayOf(PERMISSION_CAMERA, WRITE, STORAGE),PERMISSIONS_REQUEST
+            )
         }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode==1 && resultCode == Activity.RESULT_OK && data != null){
-          val image = data.data
-            try {
-                val selectedImage = MediaStore.Images.Media.getBitmap(this.contentResolver,image)
-                imageView.setImageBitmap(selectedImage)
-            }catch (e : Exception){
-              e.printStackTrace()
-            }
 
-        }
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-    fun save (view: View){
-
-    }
 }
